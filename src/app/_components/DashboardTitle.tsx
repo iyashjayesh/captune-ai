@@ -52,7 +52,7 @@ export function DashboardTitle({ title, showDropdown = true }: DashboardTitlePro
                                 }}
                                 className="w-full"
                             >
-                                <button className="w-full text-left">Log out</button>
+                                <button className="w-full text-left cursor-pointer">Log out</button>
                             </form>
                         </DropdownMenuItem>
                     </DropdownMenuContent>

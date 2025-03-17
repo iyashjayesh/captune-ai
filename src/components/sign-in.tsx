@@ -21,9 +21,12 @@ export default async function SignIn() {
                 await signIn("google")
             }}
         >
-            <Button type="submit">
+            <Button
+                type="submit"
+                className="cursor-pointer bg-[#ee335d] text-2xl font-bold text-white"
+            >
                 Sign in with Google
             </Button>
-        </form>
+        </form >
     )
 } 
