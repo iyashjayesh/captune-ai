@@ -1,6 +1,5 @@
-
 import { BlurFade } from "@/components/magicui/blur-fade";
-import SignIn from "@/components/sign-in";
+import MiddleComponent from "@/components/middle";
 import { cn } from "@/lib/utils";
 import { Poppins } from "next/font/google";
 const font = Poppins({
@@ -39,9 +38,9 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="container mx-auto px-6 py-10 md:px-0 md:py-0 mt-14 md:mt-12 max-w-4xl">
-        <SignIn />
-      </div>
+      {/* <MainUpload /> */}
+      <MiddleComponent />
+
 
       <div className="grid gap-20 md:gap-40 max-w-6xl mx-auto mt-20 md:mt-12 overflow-hidden">
         <div className="container flex flex-col items-center gap-6">
@@ -70,6 +69,6 @@ export default function Home() {
           </div>
         </div>
       </div>
-    </main>
+    </main >
   );
 }
