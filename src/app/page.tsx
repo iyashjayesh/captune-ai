@@ -1,9 +1,8 @@
+
 import { BlurFade } from "@/components/magicui/blur-fade";
-import Iphone15Pro from "@/components/magicui/iphone-15-pro";
+import SignIn from "@/components/sign-in";
 import { cn } from "@/lib/utils";
 import { Poppins } from "next/font/google";
-import Image from "next/image";
-import backimg from "./back.png";
 const font = Poppins({
   subsets: ["latin"],
   weight: ["600"]
@@ -40,29 +39,35 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="grid gap-x-6 grid-cols-3 justify-center max-w-6xl mx-auto overflow-hidden my-24">
-        <div className="flex justify-center">
-          <Iphone15Pro
-            className="w-full md:max-w-[250px] h-full md:max-h-[500px]"
-            src="https://via.placeholder.com/430x880"
-          />
-        </div>
-        <div className="flex justify-center items-center h-full">
-          <Image
-            src={backimg}
-            alt="back-img"
-            width={190}
-            height={190}
-          />
-        </div>
-        <div className="flex justify-center">
-          <Iphone15Pro
-            className="w-full md:max-w-[250px] h-full md:max-h-[500px]"
-            src="https://via.placeholder.com/430x880"
-          />
+      <SignIn />
+
+      <div className="grid gap-20 md:gap-40 max-w-6xl mx-auto mt-20 md:mt-12 overflow-hidden">
+        <div className="container flex flex-col items-center gap-6">
+          <div className="flex flex-col md:flex-row items-center justify-center gap-52">
+            {/* Before Section */}
+            <div className="flex flex-col items-center">
+              <h2 className="text-3xl font-semibold text-gray-800 mb-4">Before</h2>
+              <div className="border-2 border-dashed border-gray-400 rounded-xl overflow-hidden shadow-lg w-[300px] h-[500px] flex items-center justify-center bg-gray-100">
+                <video className="w-full h-full object-contain p-3" autoPlay loop muted playsInline controls>
+                  <source src="/reel.mp4" type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+            </div>
+
+            {/* After Section */}
+            <div className="flex flex-col items-center">
+              <h2 className="text-3xl font-semibold text-gray-800 mb-4">After</h2>
+              <div className="border-2 border-dashed border-gray-400 rounded-xl overflow-hidden shadow-lg w-[300px] h-[500px] flex items-center justify-center bg-gray-100">
+                <video className="w-full h-full object-contain p-3" autoPlay loop muted playsInline controls>
+                  <source src="/reel.mp4" type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-
     </main>
   );
 }
