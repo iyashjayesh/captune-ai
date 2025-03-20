@@ -2,6 +2,8 @@ import { BlurFade } from "@/components/magicui/blur-fade";
 import MiddleComponent from "@/components/middle";
 import { cn } from "@/lib/utils";
 import { Poppins } from "next/font/google";
+import { ProfileTag } from "./_components/ProfileTag";
+import { SignOutTag } from "./_components/SingOutTag";
 const font = Poppins({
   subsets: ["latin"],
   weight: ["600"]
@@ -12,6 +14,7 @@ export default function Home() {
     <main className="flex flex-col text-center overflow-hidden">
       <div className="fixed inset-0 z-[-10] h-screen w-screen bg-white" style={{ background: 'radial-gradient(125% 125% at 50% 10%, #fff 40%, #ee335d 100%)' }}>
       </div>
+      <SignOutTag />
       <div className="overflow-y-auto flex-1 flex flex-col justify-center items-center text-center">
         <div className="container mx-auto px-6 py-10 md:px-0 md:py-0 mt-14 md:mt-12 max-w-4xl">
           <h1 className={cn("text-3xl md:text-6xl font-semibold text-slate-800 drop-shadow-md mt-6", font.className)}>
@@ -69,6 +72,7 @@ export default function Home() {
           </div>
         </div>
       </div>
+      <ProfileTag />
     </main >
   );
 }

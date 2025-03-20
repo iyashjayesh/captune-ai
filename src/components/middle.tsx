@@ -1,4 +1,4 @@
-import { MainUpload } from "@/app/_components/MainUpload";
+import MainUpload from "@/app/_components/MainUpload";
 import { signIn } from "@/auth";
 import { getSession } from "@/lib/getSession";
 import { Button } from "./ui/button";
@@ -19,7 +19,7 @@ export default async function MiddleComponent() {
             >
                 <Button
                     type="submit"
-                    className="cursor-pointer bg-[#ee335d] text-2xl font-bold text-white"
+                    className="cursor-pointer bg-[#ee335d] text-2xl font-bold text-white mt-12 mb-0"
                 >
                     Sign in with Google
                 </Button>

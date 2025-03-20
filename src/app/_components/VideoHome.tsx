@@ -8,17 +8,20 @@ import { Upload, UploadIcon } from "lucide-react";
 import { Poppins } from "next/font/google";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import VideoProcessed from "./VideoProcessed";
 const font = Poppins({ subsets: ["latin"], weight: ["600"] });
 const normalfont = Poppins({ subsets: ["latin"], weight: ["400"] });
 
-// @TODO: Need to move to env variable
-const token = "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";
+// const token = "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";
 
 export default function VideoHome() {
 
     const [loading, setLoading] = useState(false);
+    const [videoProcessed, setVideoProcessed] = useState(false);
     const ffmpegRef = useRef(new FFmpeg());
     const [videoFile, setVideoFile] = useState<File | null>(null);
+
+    const [transcriptState, setTanscriptState] = useState<{ chunks: { timestamp: [number, number]; text: string }[] } | null>(null);
 
     useEffect(() => {
         load();
@@ -96,7 +99,7 @@ export default function VideoHome() {
                 "https://api-inference.huggingface.co/models/openai/whisper-large-v3-turbo",
                 {
                     headers: {
-                        Authorization: `Bearer ${token}`,
+                        Authorization: 'Bearer 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',
                         "Content-Type": "application/json",
                     },
                     method: "POST",
@@ -116,6 +119,8 @@ export default function VideoHome() {
             const endTIme = Date.now();
             toast.success("Transcription completed successfully, took " + ((endTIme - startTime) / 1000).toFixed(2) + " seconds to transcribe the video.");
             console.log("Time taken to transcribe: ", ((endTIme - startTime) / 1000).toFixed(2), " seconds");
+            setTanscriptState(data);
+            setVideoProcessed(true);
         } catch (error) {
             console.error("Error converting video to audio:", error);
         } finally {
@@ -149,38 +154,44 @@ export default function VideoHome() {
     }
 
     return (
-        <div>
-            {videoFile ? (
-                <div className="flex flex-col items-center gap-3">
-                    <button
-                        disabled={loading}
-                        onClick={convert}
-                        className={cn("flex flex-row items-center gap-1 w-fit bg-red-500 hover:bg-red-600 text-white text-base font-semibold py-1.5 px-4 rounded-sm shadow-md cursor-pointer", font.className)}
-                    >
-                        {loading ? (
-                            <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
-                        ) : (
-                            <>
-                                <UploadIcon className="size-5" /> Generate Captions
-                            </>
-                        )}
-                    </button>
-                    <video src={URL.createObjectURL(videoFile)} controls className="w-fit h-fit max-h-96 rounded-lg" />
-                </div>
-            ) : (
-                <div className="border-2 border-dashed border-gray-600 bg-gray-100 rounded-lg p-8 flex flex-col items-center" onDrop={handleDrop} onDragOver={(e) => e.preventDefault()}>
-                    <label className="flex flex-col items-center cursor-pointer">
-                        <Upload className="size-9 text-red-400 mb-2" />
-                        <span className={cn("text-lg text-gray-800", normalfont.className)}>
-                            Drop your video here
-                        </span>
-                        <span className={cn("flex flex-row justify-between gap-3 mt-1 text-sm text-gray-400", normalfont.className)}>
-                            <p>Max length: 5.00 mins</p>
-                            <p>Max size: 50MB</p>
-                        </span>
-                        <input type="file" accept="video/*" onChange={handleFileChange} className="hidden" />
-                    </label>
-                </div>
+        <div className="mt-3">
+            {!videoProcessed && <>
+                {videoFile ? (
+                    <div className="flex flex-col items-center gap-3">
+                        <button
+                            disabled={loading}
+                            onClick={convert}
+                            className={cn("flex flex-row items-center gap-1 w-fit bg-red-500 hover:bg-red-600 text-white text-base font-semibold py-1.5 px-4 rounded-sm shadow-md cursor-pointer", font.className)}
+                        >
+                            {loading ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
+                            ) : (
+                                <>
+                                    <UploadIcon className="size-5" /> Generate Captions
+                                </>
+                            )}
+                        </button>
+                        <video src={URL.createObjectURL(videoFile)} controls className="w-fit h-fit max-h-96 rounded-lg" />
+                    </div>
+                ) : (
+                    <div className="border-2 border-dashed border-gray-600 bg-gray-100 rounded-lg p-8 flex flex-col items-center" onDrop={handleDrop} onDragOver={(e) => e.preventDefault()}>
+                        <label className="flex flex-col items-center cursor-pointer">
+                            <Upload className="size-9 text-red-400 mb-2" />
+                            <span className={cn("text-lg text-gray-800", normalfont.className)}>
+                                Drop your video here
+                            </span>
+                            <span className={cn("flex flex-row justify-between gap-3 mt-1 text-sm text-gray-400", normalfont.className)}>
+                                <p>Max length: 5.00 mins</p>
+                                <p>Max size: 50MB</p>
+                            </span>
+                            <input type="file" accept="video/*" onChange={handleFileChange} className="hidden" />
+                        </label>
+                    </div>
+                )}
+            </>}
+
+            {videoProcessed && videoFile && transcriptState && (
+                <VideoProcessed videoFile={videoFile} transcript={transcriptState} />
             )}
         </div>
     );

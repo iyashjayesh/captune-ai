@@ -1,8 +1,6 @@
-import YashImg from "@/public/yash-img.png";
 import Image from "next/image";
 import Link from "next/link";
-
-
+import YashImg from "../../../public/yash-img.png";
 export function ProfileTag() {
     return (
         <Link
@@ -18,7 +16,6 @@ export function ProfileTag() {
                 <div className="avatar -mt-1 -mb-1">
                     <div className="relative w-7 rounded-full">
                         <Image
-                            fetchPriority="high"
                             src={YashImg}
                             alt="Yash Chauhan"
                             className="rounded-full"
