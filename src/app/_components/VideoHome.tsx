@@ -12,8 +12,6 @@ import VideoProcessed from "./VideoProcessed";
 const font = Poppins({ subsets: ["latin"], weight: ["600"] });
 const normalfont = Poppins({ subsets: ["latin"], weight: ["400"] });
 
-// const token = "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";
-
 export default function VideoHome() {
 
     const [loading, setLoading] = useState(false);
@@ -95,19 +93,16 @@ export default function VideoHome() {
             const output2 = Buffer.from(audioBuffer);
             const base64Audio = output2.toString("base64");
 
-            const response = await fetch(
-                "https://api-inference.huggingface.co/models/openai/whisper-large-v3-turbo",
-                {
-                    headers: {
-                        Authorization: 'Bearer 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',
-                        "Content-Type": "application/json",
-                    },
-                    method: "POST",
-                    body: JSON.stringify({ inputs: base64Audio, parameters: { return_timestamps: true } }),
-                }
-            );
+            const response = await fetch("/api/transcribe", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ base64Audio }),
+            });
 
-            const data = await response.json();
+            const res = await response.json();
+            const data = res.body;
 
             if (!data || typeof data !== "object" || data === null || !("chunks" in data)) {
                 console.error("Invalid response structure:", data);
@@ -121,6 +116,38 @@ export default function VideoHome() {
             console.log("Time taken to transcribe: ", ((endTIme - startTime) / 1000).toFixed(2), " seconds");
             setTanscriptState(data);
             setVideoProcessed(true);
+
+            // call /api/project with the following body:
+            // const body = {
+            //     userId: "616a5b7b8f0a3e001f7f2f1c",
+            //     videoFileName: videoFile.name,
+            //     videoFileSize: videoFile.size,
+            //     audioFileName: output,
+            //     audioFileSize: output2.length,
+            //     transcription: JSON.stringify(data),
+            //     processingTime: (endTIme - startTime) / 1000
+            // };
+
+            const body = {
+                videoFileName: videoFile.name,
+                videoFileSize: videoFile.size,
+                audioFileName: output,
+                audioFileSize: output2.length,
+                transcription: JSON.stringify(data),
+                processingTime: (endTIme - startTime) / 1000
+            };
+
+            const response2 = await fetch("/api/project", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(body),
+            });
+
+            const project = await response2.json();
+
+            console.log("Project created:", project);
         } catch (error) {
             console.error("Error converting video to audio:", error);
         } finally {

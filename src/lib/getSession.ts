@@ -1,7 +1,8 @@
 import { auth } from "@/auth";
 import { cache } from "react";
+import client from "./db";
 
 export const getSession = cache(async () => {
-    const session = await auth();
-    return session;
+    await client.connect();
+    return await auth();
 });
