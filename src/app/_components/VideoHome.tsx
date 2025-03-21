@@ -12,6 +12,32 @@ import VideoProcessed from "./VideoProcessed";
 const font = Poppins({ subsets: ["latin"], weight: ["600"] });
 const normalfont = Poppins({ subsets: ["latin"], weight: ["400"] });
 
+function createSrtFileFromJson(jsonData: { chunks: { timestamp: [number, number]; text: string }[] }) {
+    try {
+        const chunks = jsonData.chunks;
+        const srtContent = chunks.map((chunk, index) => {
+            const startTime = formatTimestamp(chunk.timestamp[0]);
+            const endTime = formatTimestamp(chunk.timestamp[1]);
+            return `${index + 1}\n${startTime} --> ${endTime}\n${chunk.text}\n\n`;
+        }).join('');
+
+        return srtContent;
+    } catch (error) {
+        console.log("Error creating SRT file:", error);
+        return null;
+    }
+}
+
+function formatTimestamp(seconds: number) {
+    const date = new Date(seconds * 1000);
+    const hh = ('0' + date.getUTCHours()).slice(-2);
+    const mm = ('0' + date.getUTCMinutes()).slice(-2);
+    const ss = ('0' + date.getUTCSeconds()).slice(-2);
+    const sss = ('00' + date.getUTCMilliseconds()).slice(-3);
+
+    return `${hh}:${mm}:${ss},${sss}`;
+}
+
 export default function VideoHome() {
 
     const [loading, setLoading] = useState(false);
@@ -62,6 +88,8 @@ export default function VideoHome() {
     };
 
 
+
+
     const convert = async (): Promise<void> => {
         if (!videoFile) {
             toast.error("No video file selected!");
@@ -80,13 +108,12 @@ export default function VideoHome() {
             });
 
             if (!output) {
-                console.error("Error converting video to audio:", output);
+                console.log("Error converting video to audio:", output);
                 return; // Handle error appropriately
             }
 
             toast.success("Audio file generated successfully!");
-
-            console.log("Audio file generated:", url);
+            console.log("Audio file generated:", url)
 
             const startTime = Date.now();
             const audioBuffer = await fetch(url).then((res) => res.arrayBuffer());
@@ -104,8 +131,15 @@ export default function VideoHome() {
             const res = await response.json();
             const data = res.body;
 
+            // create srt file from json data
+            const srtContent = createSrtFileFromJson(data);
+            if (!srtContent) {
+                console.log("Error creating SRT file");
+                return;
+            }
+
             if (!data || typeof data !== "object" || data === null || !("chunks" in data)) {
-                console.error("Invalid response structure:", data);
+                console.log("Invalid response structure:", data);
                 return; // Handle error appropriately
             }
 
@@ -116,17 +150,6 @@ export default function VideoHome() {
             console.log("Time taken to transcribe: ", ((endTIme - startTime) / 1000).toFixed(2), " seconds");
             setTanscriptState(data);
             setVideoProcessed(true);
-
-            // call /api/project with the following body:
-            // const body = {
-            //     userId: "616a5b7b8f0a3e001f7f2f1c",
-            //     videoFileName: videoFile.name,
-            //     videoFileSize: videoFile.size,
-            //     audioFileName: output,
-            //     audioFileSize: output2.length,
-            //     transcription: JSON.stringify(data),
-            //     processingTime: (endTIme - startTime) / 1000
-            // };
 
             const body = {
                 videoFileName: videoFile.name,
@@ -149,7 +172,7 @@ export default function VideoHome() {
 
             console.log("Project created:", project);
         } catch (error) {
-            console.error("Error converting video to audio:", error);
+            console.log("Error converting video to audio:", error);
         } finally {
             setLoading(false);
         }
