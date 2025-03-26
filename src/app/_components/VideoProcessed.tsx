@@ -1,7 +1,9 @@
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import loadFfmpeg from "@/lib/load-ffmpeg";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile } from "@ffmpeg/util";
+import { debounce } from "lodash";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -9,18 +11,122 @@ type VideoProcessedProps = {
     videoFile: File;
     transcript: { chunks: { timestamp: [number, number]; text: string }[] };
     onNewVideo?: () => void;
+    projectId: string;
 };
 
-export default function VideoProcessed({ videoFile, transcript, onNewVideo }: VideoProcessedProps) {
+export default function VideoProcessed({ videoFile, transcript: initialTranscript, onNewVideo, projectId }: VideoProcessedProps) {
     const [activeSubtitleIndex, setActiveSubtitleIndex] = useState<number | null>(null);
     const [exporting, setExporting] = useState(false);
     const [exported, setExported] = useState(false);
+    const [transcript, setTranscript] = useState(initialTranscript);
     const subtitleListRef = useRef<HTMLDivElement>(null);
     const videoRef = useRef<HTMLVideoElement>(null);
     const ffmpegRef = useRef<FFmpeg | null>(null);
 
     // Memoize video URL to avoid re-generating on every render
     const videoUrl = useMemo(() => URL.createObjectURL(videoFile), [videoFile]);
+
+    // Debounced function to update timestamps in the database
+    const updateTimestamps = useMemo(
+        () =>
+            debounce(async (chunks: { timestamp: [number, number]; text: string }[]) => {
+                try {
+                    const response = await fetch(`/api/project/${projectId}`, {
+                        method: "PATCH",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            transcription: JSON.stringify({ chunks }),
+                        }),
+                    });
+
+                    if (!response.ok) {
+                        throw new Error("Failed to update timestamps");
+                    }
+
+                    toast.success("Timestamps updated successfully");
+                } catch (error) {
+                    console.error("Error updating timestamps:", error);
+                    toast.error("Failed to update timestamps");
+                }
+            }, 1000),
+        [projectId]
+    );
+
+    const handleTimestampChange = (index: number, isStart: boolean, value: string) => {
+        const newTranscript = { ...transcript };
+        const timestamp = parseFloat(value);
+
+        if (isNaN(timestamp)) {
+            toast.error("Please enter a valid number");
+            return;
+        }
+
+        // Get video duration
+        const video = videoRef.current;
+        if (!video) return;
+        const videoDuration = video.duration;
+
+        // Validate timestamp is within video duration
+        if (timestamp < 0 || timestamp > videoDuration) {
+            toast.error(`Timestamp must be between 0 and ${videoDuration.toFixed(1)} seconds`);
+            return;
+        }
+
+        if (isStart) {
+            // Validate start time
+            const currentEndTime = newTranscript.chunks[index].timestamp[1];
+            if (timestamp >= currentEndTime) {
+                toast.error("Start time must be less than end time");
+                return;
+            }
+
+            // Check for overlap with previous chunk
+            if (index > 0) {
+                const prevEndTime = newTranscript.chunks[index - 1].timestamp[1];
+                if (timestamp < prevEndTime) {
+                    toast.error("Start time cannot overlap with previous subtitle");
+                    return;
+                }
+            }
+
+            newTranscript.chunks[index].timestamp[0] = timestamp;
+        } else {
+            // Validate end time
+            const currentStartTime = newTranscript.chunks[index].timestamp[0];
+            if (timestamp <= currentStartTime) {
+                toast.error("End time must be greater than start time");
+                return;
+            }
+
+            // Check for overlap with next chunk
+            if (index < newTranscript.chunks.length - 1) {
+                const nextStartTime = newTranscript.chunks[index + 1].timestamp[0];
+                if (timestamp > nextStartTime) {
+                    toast.error("End time cannot overlap with next subtitle");
+                    return;
+                }
+            }
+
+            newTranscript.chunks[index].timestamp[1] = timestamp;
+        }
+
+        // Round timestamps to 1 decimal place for consistency
+        newTranscript.chunks[index].timestamp = [
+            parseFloat(newTranscript.chunks[index].timestamp[0].toFixed(1)),
+            parseFloat(newTranscript.chunks[index].timestamp[1].toFixed(1))
+        ];
+
+        // Update local state immediately
+        setTranscript(newTranscript);
+
+        // Update database with debounced function
+        updateTimestamps(newTranscript.chunks);
+
+        // Show immediate feedback
+        toast.success("Timestamps updated");
+    };
 
     useEffect(() => {
         const video = videoRef.current;
@@ -103,19 +209,21 @@ export default function VideoProcessed({ videoFile, transcript, onNewVideo }: Vi
                     const videoData = await fetch(videoUrl).then(res => res.arrayBuffer());
                     const videoBlob = new Blob([videoData], { type: videoFile.type });
 
-                    // Write video file to FFmpeg
                     await ffmpeg.writeFile('input.mp4', await fetchFile(videoBlob));
 
-                    // Create SRT file content with proper formatting
-                    const srtContent = transcript.chunks.map((chunk, index) => {
+                    console.log("Transcript:", transcript);
+
+                    // Use the current transcript state to ensure we have the latest timestamps
+                    const currentTranscript = transcript;
+                    const srtContent = currentTranscript.chunks.map((chunk, index) => {
                         const startTime = formatTime(chunk.timestamp[0]);
                         const endTime = formatTime(chunk.timestamp[1]);
                         return `${index + 1}\n${startTime} --> ${endTime}\n${chunk.text}\n\n`;
                     }).join('');
 
-                    // Write SRT file to FFmpeg's virtual filesystem
                     await ffmpeg.writeFile('subtitles.srt', srtContent);
 
+                    // Use subtitle filter to burn subtitles into the video
                     await ffmpeg.exec([
                         '-i', 'input.mp4',
                         '-i', 'subtitles.srt',
@@ -124,16 +232,13 @@ export default function VideoProcessed({ videoFile, transcript, onNewVideo }: Vi
                         'output.mp4'
                     ]);
 
-                    // Clean up files from memory
                     await ffmpeg.deleteFile('subtitles.srt');
                     await ffmpeg.deleteFile('input.mp4');
 
-                    // Read the output file
                     const data = await ffmpeg.readFile('output.mp4');
                     const blob = new Blob([data], { type: 'video/mp4' });
                     const url = URL.createObjectURL(blob);
 
-                    // Create download link
                     const a = document.createElement('a');
                     a.href = url;
                     a.download = `captioned_${videoFile.name}`;
@@ -182,10 +287,24 @@ export default function VideoProcessed({ videoFile, transcript, onNewVideo }: Vi
                                 className={`m-2 flex flex-col gap-2 p-2 rounded-lg ${activeSubtitleIndex === index ? "bg-red-300 text-white" : ""
                                     }`}
                             >
-                                <div className="flex flex-row justify-between">
-                                    <p className="bg-red-400 w-fit px-2 rounded-lg text-white">
-                                        {chunk.timestamp[0]} - {chunk.timestamp[1]}
-                                    </p>
+                                <div className="flex flex-row justify-between items-center gap-2">
+                                    <div className="flex items-center gap-2">
+                                        <Input
+                                            type="number"
+                                            step="0.1"
+                                            value={chunk.timestamp[0]}
+                                            onChange={(e) => handleTimestampChange(index, true, e.target.value)}
+                                            className="w-20 bg-red-400 text-white border-none"
+                                        />
+                                        <span className="text-white">-</span>
+                                        <Input
+                                            type="number"
+                                            step="0.1"
+                                            value={chunk.timestamp[1]}
+                                            onChange={(e) => handleTimestampChange(index, false, e.target.value)}
+                                            className="w-20 bg-red-400 text-white border-none"
+                                        />
+                                    </div>
                                     <p className="text-sm md:text-base font-bold bg-red-400 w-fit px-2 rounded-lg text-white">
                                         {index + 1}
                                     </p>
@@ -211,7 +330,7 @@ export default function VideoProcessed({ videoFile, transcript, onNewVideo }: Vi
                             </button>
                             <button
                                 onClick={handleExportVideo}
-                                disabled={exporting || exported}
+                                // disabled={exporting || exported}
                                 className={`text-white text-lg rounded-lg font-semibold px-4 py-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${exported
                                     ? 'bg-green-500 hover:bg-green-600'
                                     : 'bg-red-500 hover:bg-red-600'

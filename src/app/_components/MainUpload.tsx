@@ -22,6 +22,7 @@ export default function MainUpload() {
     const ffmpegRef = useRef(new FFmpeg());
     const [videoFile, setVideoFile] = useState<File | null>(null);
     const [transcriptState, setTanscriptState] = useState<{ chunks: { timestamp: [number, number]; text: string }[] } | null>(null);
+    const [projectId, setProjectId] = useState<string | null>(null);
 
     useEffect(() => {
         load();
@@ -70,78 +71,80 @@ export default function MainUpload() {
         }
 
         setLoading(true);
-        toast.info("Starting transcription...");
 
-        try {
-            const { url, output } = await convertFile(ffmpegRef.current, {
-                file: videoFile,
-                to: 'mp3',
-                file_name: videoFile.name,
-                file_type: videoFile.type
-            });
+        toast.promise(
+            (async () => {
+                try {
+                    const { url, output } = await convertFile(ffmpegRef.current, {
+                        file: videoFile,
+                        to: 'mp3',
+                        file_name: videoFile.name,
+                        file_type: videoFile.type
+                    });
 
-            if (!output) {
-                console.error("Error converting video to audio:", output);
-                return;
+                    if (!output) {
+                        throw new Error("Error converting video to audio");
+                    }
+
+                    const startTime = Date.now();
+                    const audioBuffer = await fetch(url).then((res) => res.arrayBuffer());
+                    const output2 = Buffer.from(audioBuffer);
+                    const base64Audio = output2.toString("base64");
+
+                    const response = await fetch("/api/transcribe", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({ base64Audio }),
+                    });
+
+                    const res = await response.json();
+                    const data = res.body;
+
+                    if (!data || typeof data !== "object" || data === null || !("chunks" in data)) {
+                        throw new Error("Invalid response structure");
+                    }
+
+                    const newChunks = fixTimestamps(data.chunks as { timestamp: [number, number]; text: string }[]);
+                    data.chunks = newChunks;
+                    const endTime = Date.now();
+                    const processingTime = ((endTime - startTime) / 1000).toFixed(2);
+
+                    const body = {
+                        videoFileName: videoFile.name,
+                        videoFileSize: videoFile.size,
+                        audioFileName: output,
+                        audioFileSize: output2.length,
+                        transcription: JSON.stringify(data),
+                        processingTime: (endTime - startTime) / 1000
+                    };
+
+                    const response2 = await fetch("/api/project", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify(body),
+                    });
+
+                    const project = await response2.json();
+                    console.log(project);
+                    setTanscriptState(data);
+                    setVideoProcessed(true);
+                    setProjectId(project.message);
+
+                    return { processingTime };
+                } finally {
+                    setLoading(false);
+                }
+            })(),
+            {
+                loading: 'Starting transcription...',
+                success: (data) => `Transcription completed successfully in ${data.processingTime} seconds`,
+                error: (err) => `Error: ${err.message || 'Failed to process video'}`
             }
-
-            toast.success("Audio file generated successfully!");
-
-            console.log("Audio file generated:", url);
-
-            const startTime = Date.now();
-            const audioBuffer = await fetch(url).then((res) => res.arrayBuffer());
-            const output2 = Buffer.from(audioBuffer);
-            const base64Audio = output2.toString("base64");
-
-            const response = await fetch("/api/transcribe", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ base64Audio }),
-            });
-
-            const res = await response.json();
-            const data = res.body;
-
-            if (!data || typeof data !== "object" || data === null || !("chunks" in data)) {
-                console.error("Invalid response structure:", data);
-                return;
-            }
-
-            const newChunks = fixTimestamps(data.chunks as { timestamp: [number, number]; text: string }[]);
-            data.chunks = newChunks;
-            const endTIme = Date.now();
-            toast.success("Transcription completed successfully, took " + ((endTIme - startTime) / 1000).toFixed(2) + " seconds to transcribe the video.");
-            console.log("Time taken to transcribe: ", ((endTIme - startTime) / 1000).toFixed(2), " seconds");
-            setTanscriptState(data);
-            setVideoProcessed(true);
-
-            const body = {
-                videoFileName: videoFile.name,
-                videoFileSize: videoFile.size,
-                audioFileName: output,
-                audioFileSize: output2.length,
-                transcription: JSON.stringify(data),
-                processingTime: (endTIme - startTime) / 1000
-            };
-
-            const response2 = await fetch("/api/project", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(body),
-            });
-
-            const project = await response2.json();
-            console.log("Project created:", project);
-        } catch (error) {
-            console.error("Error converting video to audio:", error);
-        } finally {
-            setLoading(false);
-        }
+        );
     }
 
     function fixTimestamps(chunks: { timestamp: [number, number]; text: string }[]) {
@@ -227,7 +230,7 @@ export default function MainUpload() {
                         )}
 
                         {videoProcessed && videoFile && transcriptState && (
-                            <VideoProcessed videoFile={videoFile} transcript={transcriptState} />
+                            <VideoProcessed videoFile={videoFile} transcript={transcriptState} projectId={projectId!} />
                         )}
                     </div>
                 </DialogContent>
