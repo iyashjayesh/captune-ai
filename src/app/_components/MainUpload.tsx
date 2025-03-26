@@ -21,6 +21,7 @@ export default function MainUpload() {
     const [videoProcessed, setVideoProcessed] = useState(false);
     const ffmpegRef = useRef(new FFmpeg());
     const [videoFile, setVideoFile] = useState<File | null>(null);
+    const [videoDuration, setVideoDuration] = useState<number>(0);
     const [transcriptState, setTanscriptState] = useState<{ chunks: { timestamp: [number, number]; text: string }[] } | null>(null);
     const [projectId, setProjectId] = useState<string | null>(null);
 
@@ -47,8 +48,10 @@ export default function MainUpload() {
             if (video.duration > 300) {
                 toast.error("Video length exceeds 5 minutes!");
                 setVideoFile(null);
+                setVideoDuration(0);
             } else {
                 setVideoFile(file);
+                setVideoDuration(video.duration);
             }
         };
     };
@@ -111,13 +114,17 @@ export default function MainUpload() {
                     const endTime = Date.now();
                     const processingTime = ((endTime - startTime) / 1000).toFixed(2);
 
+                    // video duration in seconds
+                    const videoDurationInSeconds = videoDuration;
+
                     const body = {
                         videoFileName: videoFile.name,
                         videoFileSize: videoFile.size,
+                        videoFileDuration: videoDurationInSeconds,
                         audioFileName: output,
                         audioFileSize: output2.length,
                         transcription: JSON.stringify(data),
-                        processingTime: (endTime - startTime) / 1000
+                        processingTime: processingTime
                     };
 
                     const response2 = await fetch("/api/project", {
@@ -130,6 +137,16 @@ export default function MainUpload() {
 
                     const project = await response2.json();
                     console.log(project);
+
+                    // Update total video duration stats
+                    await fetch("/api/stats", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({ duration: videoDurationInSeconds }),
+                    });
+
                     setTanscriptState(data);
                     setVideoProcessed(true);
                     setProjectId(project.message);

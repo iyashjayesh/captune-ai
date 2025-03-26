@@ -21,6 +21,7 @@ export async function POST(req: Request) {
         userId: session?.user?.id,
         videoFileName: body.videoFileName,
         videoFileSize: body.videoFileSize,
+        videoFileDuration: body.videoFileDuration,
         audioFileName: body.audioFileName,
         audioFileSize: body.audioFileSize,
         transcription: body.transcription,
