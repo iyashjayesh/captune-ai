@@ -8,11 +8,13 @@ import { toast } from "sonner";
 type VideoProcessedProps = {
     videoFile: File;
     transcript: { chunks: { timestamp: [number, number]; text: string }[] };
+    onNewVideo?: () => void;
 };
 
-export default function VideoProcessed({ videoFile, transcript }: VideoProcessedProps) {
+export default function VideoProcessed({ videoFile, transcript, onNewVideo }: VideoProcessedProps) {
     const [activeSubtitleIndex, setActiveSubtitleIndex] = useState<number | null>(null);
     const [exporting, setExporting] = useState(false);
+    const [exported, setExported] = useState(false);
     const subtitleListRef = useRef<HTMLDivElement>(null);
     const videoRef = useRef<HTMLVideoElement>(null);
     const ffmpegRef = useRef<FFmpeg | null>(null);
@@ -60,7 +62,28 @@ export default function VideoProcessed({ videoFile, transcript }: VideoProcessed
         return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')},${ms.toString().padStart(3, '0')}`;
     };
 
-    const handleExport = async () => {
+    const handleExportSRT = async () => {
+        try {
+            const srtContent = transcript.chunks.map((chunk, index) => {
+                const startTime = formatTime(chunk.timestamp[0]);
+                const endTime = formatTime(chunk.timestamp[1]);
+                return `${index + 1}\n${startTime} --> ${endTime}\n${chunk.text}\n\n`;
+            }).join('');
+
+            const srtBlob = new Blob([srtContent], { type: 'text/plain' });
+            const srtUrl = URL.createObjectURL(srtBlob);
+            const srtLink = document.createElement('a');
+            srtLink.href = srtUrl;
+            srtLink.download = 'subtitles.srt';
+            srtLink.click();
+            URL.revokeObjectURL(srtUrl);
+        } catch (error) {
+            console.log("Failed to export SRT file:", error);
+            toast.error('Failed to export SRT file');
+        }
+    };
+
+    const handleExportVideo = async () => {
         if (!ffmpegRef.current) {
             try {
                 ffmpegRef.current = await loadFfmpeg();
@@ -72,159 +95,162 @@ export default function VideoProcessed({ videoFile, transcript }: VideoProcessed
         }
 
         setExporting(true);
-        toast.info("Starting export process...");
 
-        try {
-            const ffmpeg = ffmpegRef.current;
-            const videoData = await fetch(videoUrl).then(res => res.arrayBuffer());
-            const videoBlob = new Blob([videoData], { type: videoFile.type });
+        toast.promise(
+            (async () => {
+                try {
+                    const ffmpeg = ffmpegRef.current as FFmpeg;
+                    const videoData = await fetch(videoUrl).then(res => res.arrayBuffer());
+                    const videoBlob = new Blob([videoData], { type: videoFile.type });
 
-            // Write video file to FFmpeg
-            await ffmpeg.writeFile('input.mp4', await fetchFile(videoBlob));
+                    // Write video file to FFmpeg
+                    await ffmpeg.writeFile('input.mp4', await fetchFile(videoBlob));
 
-            // Create SRT file content with proper formatting
-            const srtContent = transcript.chunks.map((chunk, index) => {
-                const startTime = formatTime(chunk.timestamp[0]);
-                const endTime = formatTime(chunk.timestamp[1]);
-                return `${index + 1}\n${startTime} --> ${endTime}\n${chunk.text}\n\n`;
-            }).join('');
+                    // Create SRT file content with proper formatting
+                    const srtContent = transcript.chunks.map((chunk, index) => {
+                        const startTime = formatTime(chunk.timestamp[0]);
+                        const endTime = formatTime(chunk.timestamp[1]);
+                        return `${index + 1}\n${startTime} --> ${endTime}\n${chunk.text}\n\n`;
+                    }).join('');
 
-            // Write SRT file to FFmpeg's virtual filesystem
-            await ffmpeg.writeFile('subtitles.srt', srtContent);
+                    // Write SRT file to FFmpeg's virtual filesystem
+                    await ffmpeg.writeFile('subtitles.srt', srtContent);
 
-            // // Create tmp directory and write font file
-            // await ffmpeg.exec(['-i', 'input.mp4', '-f', 'null', '-']);
-            // await ffmpeg.writeFile('tmp/arial.ttf', await fetchFile('/Arial.ttf'));
+                    await ffmpeg.exec([
+                        '-i', 'input.mp4',
+                        '-i', 'subtitles.srt',
+                        '-c', 'copy',
+                        '-c:s', 'mov_text',
+                        'output.mp4'
+                    ]);
 
-            // // List files in FFmpeg's virtual filesystem to verify
-            // const files = await ffmpeg.listDir('/');
-            // console.log('Files in FFmpeg filesystem:', files);
+                    // Clean up files from memory
+                    await ffmpeg.deleteFile('subtitles.srt');
+                    await ffmpeg.deleteFile('input.mp4');
 
-            // Burn subtitles into video with better styling
-            // await ffmpeg.exec([
-            //     '-i', 'input.mp4',
-            //     '-vf', 'subtitles=subtitles.srt:force_style=\'FontName=/tmp/arial.ttf,FontSize=24,PrimaryColour=&HFFFFFF,OutlineColour=&H000000,Outline=2,Shadow=1,MarginV=25\'',
-            //     '-c:a', 'copy',
-            //     '-preset', 'medium',
-            //     '-crf', '23',
-            //     'output.mp4',
-            //     '-report'
-            // ]);
+                    // Read the output file
+                    const data = await ffmpeg.readFile('output.mp4');
+                    const blob = new Blob([data], { type: 'video/mp4' });
+                    const url = URL.createObjectURL(blob);
 
-            await ffmpeg.exec([
-                '-i', 'input.mp4',
-                '-i', 'subtitles.srt',
-                '-c', 'copy',
-                '-c:s', 'mov_text',
-                'output.mp4'
-            ]);
+                    // Create download link
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `captioned_${videoFile.name}`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
 
-            // // List files in FFmpeg's virtual filesystem to verify
-            // const newFiles = await ffmpeg.listDir('/');
-            // console.log('Files in FFmpeg filesystem:', newFiles);
-
-            // can we also downlpod all the file which has .log as extension?
-            // const logFiles = newFiles.filter(file => file.name.endsWith('.log'));
-            // logFiles.forEach(async (logFile) => {
-            //     const logFileData = await ffmpeg.readFile(logFile.name);
-            //     const logBlob = new Blob([logFileData], { type: 'text/plain' });
-            //     const logUrl = URL.createObjectURL(logBlob);
-            //     const logLink = document.createElement('a');
-            //     logLink.href = logUrl;
-            //     logLink.download = logFile.name;
-            //     logLink.click();
-            //     URL.revokeObjectURL(logUrl);
-            // });
-
-            const srtFile = await ffmpeg.readFile('subtitles.srt');
-            const srtBlob = new Blob([srtFile], { type: 'text/plain' });
-            const srtUrl = URL.createObjectURL(srtBlob);
-            const srtLink = document.createElement('a');
-            srtLink.href = srtUrl;
-            srtLink.download = 'subtitles.srt';
-            srtLink.click();
-            URL.revokeObjectURL(srtUrl);
-
-            // Clean up files from memory
-            await ffmpeg.deleteFile('subtitles.srt');
-            await ffmpeg.deleteFile('input.mp4');
-
-            // Read the output file
-            const data = await ffmpeg.readFile('output.mp4');
-            const blob = new Blob([data], { type: 'video/mp4' });
-            const url = URL.createObjectURL(blob);
-
-            // Create download link
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `captioned_${videoFile.name}`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-
-            toast.success("Video exported successfully!");
-        } catch (error) {
-            console.error('Export error:', error);
-            toast.error("Failed to export video");
-        } finally {
-            setExporting(false);
-        }
+                    setExported(true);
+                    return { name: videoFile.name };
+                } finally {
+                    setExporting(false);
+                }
+            })(),
+            {
+                loading: 'Starting video export process...',
+                success: (data) => `Successfully exported ${data.name}`,
+                error: 'Failed to export video',
+            }
+        );
     };
 
-
     return (
-        <div className="flex flex-col md:flex-row gap-6 md:gap-10 w-full">
-            <Card className="flex-1 basis-1/2 p-2 md:p-6 shadow-lg rounded-2xl overflow-auto">
-                <h2 className="text-xl md:text-2xl font-bold mb-4 text-red-500">Subtitles</h2>
-                <div ref={subtitleListRef} className="flex flex-col overflow-y-auto h-[calc(90vh-200px)]">
-                    {transcript?.chunks.map((chunk, index) => (
-                        <div
-                            key={index}
-                            id={`subtitle-${index}`}
-                            className={`m-2 flex flex-col gap-2 p-2 rounded-lg ${activeSubtitleIndex === index ? "bg-red-300 text-white" : ""
-                                }`}
-                        >
-                            <div className="flex flex-row justify-between">
-                                <p className="bg-red-400 w-fit px-2 rounded-lg text-white">
-                                    {chunk.timestamp[0]} - {chunk.timestamp[1]}
-                                </p>
-                                <p className="text-sm md:text-base font-bold bg-red-400 w-fit px-2 rounded-lg text-white">
-                                    {index + 1}
-                                </p>
-                            </div>
-                            <p className="text-sm md:text-base">{chunk.text}</p>
-                        </div>
-                    ))}
-                </div>
-            </Card>
-            <Card className="flex-1 basis-1/2 p-2 md:p-6 shadow-lg rounded-2xl flex flex-col items-center overflow-hidden">
-                <div className="flex flex-row justify-between w-full mb-2">
-                    <h2 className="text-xl md:text-2xl font-bold text-red-500">Video Preview</h2>
+        <div className="flex flex-col gap-6 w-full">
+            {exported && (
+                <div className="flex justify-center w-full">
                     <button
-                        onClick={handleExport}
-                        disabled={exporting}
-                        className="text-white text-lg rounded-lg font-semibold px-4 py-2 bg-red-500 hover:bg-red-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        onClick={onNewVideo}
+                        className="text-white text-lg rounded-lg font-semibold px-6 py-3 bg-green-500 hover:bg-green-600 transition-all flex items-center gap-2"
                     >
-                        {exporting ? (
-                            <>
-                                <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
-                                Exporting...
-                            </>
-                        ) : (
-                            'Export'
-                        )}
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                        </svg>
+                        Upload New Video
                     </button>
                 </div>
-                <div className="flex flex-col items-center justify-center w-full h-full">
-                    <video
-                        src={videoUrl}
-                        ref={videoRef}
-                        controls
-                        className="w-fit py-20 rounded-xl h-[40vh] md:h-[60vh] object-contain"
-                    />
-                </div>
-            </Card>
+            )}
+            <div className="flex flex-col md:flex-row gap-6 md:gap-10 w-full">
+                <Card className="flex-1 basis-1/2 p-2 md:p-6 shadow-lg rounded-2xl overflow-auto">
+                    <h2 className="text-xl md:text-2xl font-bold mb-4 text-red-500">Subtitles</h2>
+                    <div ref={subtitleListRef} className="flex flex-col overflow-y-auto h-[calc(90vh-200px)]">
+                        {transcript?.chunks.map((chunk, index) => (
+                            <div
+                                key={index}
+                                id={`subtitle-${index}`}
+                                className={`m-2 flex flex-col gap-2 p-2 rounded-lg ${activeSubtitleIndex === index ? "bg-red-300 text-white" : ""
+                                    }`}
+                            >
+                                <div className="flex flex-row justify-between">
+                                    <p className="bg-red-400 w-fit px-2 rounded-lg text-white">
+                                        {chunk.timestamp[0]} - {chunk.timestamp[1]}
+                                    </p>
+                                    <p className="text-sm md:text-base font-bold bg-red-400 w-fit px-2 rounded-lg text-white">
+                                        {index + 1}
+                                    </p>
+                                </div>
+                                <p className="text-sm md:text-base">{chunk.text}</p>
+                            </div>
+                        ))}
+                    </div>
+                </Card>
+                <Card className="flex-1 basis-1/2 p-2 md:p-6 shadow-lg rounded-2xl flex flex-col items-center overflow-hidden">
+                    <div className="flex flex-col gap-4 w-full mb-2">
+                        <h2 className="text-xl md:text-2xl font-bold text-red-500">Video Preview</h2>
+                        <div className="flex flex-row gap-4 justify-end">
+                            <button
+                                onClick={handleExportSRT}
+                                disabled={exporting}
+                                className="text-white text-lg rounded-lg font-semibold px-4 py-2 bg-blue-500 hover:bg-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                                </svg>
+                                Export SRT
+                            </button>
+                            <button
+                                onClick={handleExportVideo}
+                                disabled={exporting || exported}
+                                className={`text-white text-lg rounded-lg font-semibold px-4 py-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${exported
+                                    ? 'bg-green-500 hover:bg-green-600'
+                                    : 'bg-red-500 hover:bg-red-600'
+                                    }`}
+                            >
+                                {exporting ? (
+                                    <>
+                                        <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
+                                        Exporting...
+                                    </>
+                                ) : exported ? (
+                                    <>
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                        </svg>
+                                        Exported Successfully
+                                    </>
+                                ) : (
+                                    <>
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                                            <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                                        </svg>
+                                        Export Video
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                    <div className="flex flex-col items-center justify-center w-full h-full">
+                        <video
+                            src={videoUrl}
+                            ref={videoRef}
+                            controls
+                            className="w-fit py-20 rounded-xl h-[40vh] md:h-[60vh] object-contain"
+                        />
+                    </div>
+                </Card>
+            </div>
         </div>
     );
 }
