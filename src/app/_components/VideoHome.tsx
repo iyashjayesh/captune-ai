@@ -1,6 +1,6 @@
 "use client";
 
-import { convertFile } from "@/lib/convert";
+import convertFile from "@/lib/convert";
 import loadFfmpeg from "@/lib/load-ffmpeg";
 import { cn } from "@/lib/utils";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
