@@ -18,7 +18,7 @@ function removeFileExtension(file_name: string) {
     return file_name; // No file extension found
 }
 
-export default async function convertFile(
+export async function convertFile(
     ffmpeg: FFmpeg,
     action: { file: File; to: string; file_name: string; file_type: string }
 ): Promise<{ url: string; output: string }> {
@@ -62,4 +62,31 @@ export default async function convertFile(
     const blob = new Blob([data], { type: file_type.split('/')[0] });
     const url = URL.createObjectURL(blob);
     return { url, output };
+}
+
+export async function embedSubtitles(ffmpeg: FFmpeg, videoFile: File, srtContent: string) {
+    // Write input files to FFmpeg's virtual filesystem
+    await ffmpeg.writeFile('input.mp4', await fetchFile(videoFile));
+    await ffmpeg.writeFile('subtitles.srt', srtContent);
+
+    // FFmpeg command to burn subtitles into video
+    const ffmpeg_cmd = [
+        '-i',
+        'input.mp4',
+        '-vf',
+        'subtitles=subtitles.srt:force_style=\'FontSize=24,FontName=Arial\'',
+        '-c:a',
+        'copy',
+        'output.mp4'
+    ];
+
+    // Execute FFmpeg command
+    await ffmpeg.exec(ffmpeg_cmd);
+
+    // Read the processed file              
+    const data = await ffmpeg.readFile('output.mp4') as Uint8Array;
+    const blob = new Blob([data], { type: 'video/mp4' });
+    const url = URL.createObjectURL(blob);
+
+    return { url, output: 'output.mp4' };
 }
