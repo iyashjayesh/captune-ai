@@ -28,7 +28,7 @@ export async function POST(req: Request) {
             { upsert: true }
         );
 
-        console.log("Stats updated:", result);
+        console.log("Stats updated:", result);      
 
         return NextResponse.json({ success: true });
     } catch (error) {

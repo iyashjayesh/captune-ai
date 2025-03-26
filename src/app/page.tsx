@@ -17,8 +17,11 @@ export default function Home() {
       </div>
       <SignOutTag />
       <div className="overflow-y-auto flex-1 flex flex-col justify-center items-center text-center">
-        <div className="container mx-auto px-6 py-10 md:px-0 md:py-0 mt-14 md:mt-12 max-w-4xl">
-          <VideoMinsCount />
+
+        <div className="container mx-auto px-6 py-10 md:px-0 md:py-0 mt-10 md:mt-9 max-w-4xl">
+          <div className="flex flex-row justify-center items-center gap-2 mb-3">
+            <VideoMinsCount />
+          </div>
           <h1 className={cn("text-3xl md:text-6xl font-semibold text-slate-800 drop-shadow-md mt-6", font.className)}>
             <BlurFade delay={0.25} inView>
               Create
@@ -45,28 +48,36 @@ export default function Home() {
 
       <MiddleComponent />
 
-      <div className="grid gap-20 md:gap-40 max-w-6xl mx-auto mt-20 md:mt-12 overflow-hidden">
-        <div className="container flex flex-col items-center gap-6">
-          <div className="flex flex-col md:flex-row items-center justify-center gap-52">
+      <div className="grid gap-20 md:gap-40 max-w-7xl mx-auto md:mt-9 overflow-hidden">
+        <div className="container flex flex-col items-center gap-12">
+          <div className="flex flex-col md:flex-row items-center justify-center gap-12 md:gap-24">
             {/* Before Section */}
             <div className="flex flex-col items-center">
-              <h2 className="text-3xl font-semibold text-gray-800 mb-4">Before</h2>
-              <div className="border-2 border-dashed border-gray-400 rounded-xl overflow-hidden shadow-lg w-[300px] h-[500px] flex items-center justify-center bg-gray-100">
-                <video className="w-full h-full object-contain p-3" autoPlay loop muted playsInline controls>
-                  <source src="/reel.mp4" type="video/mp4" />
-                  Your browser does not support the video tag.
-                </video>
+              <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-8 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Before</h2>
+              <div className="relative group">
+                <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
+                <div className="relative bg-white rounded-xl overflow-hidden shadow-[0_0_50px_-12px_rgba(0,0,0,0.25)] hover:shadow-[0_0_50px_-12px_rgba(0,0,0,0.35)] transition-all duration-300 w-[480px] h-[270px] flex items-center justify-center">
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10"></div>
+                  <video className="w-full h-full object-contain hover:scale-105 transition-transform duration-300" autoPlay loop muted playsInline controls>
+                    <source src="/hindi_reel.mp4" type="video/mp4" />
+                    Your browser does not support the video tag.
+                  </video>
+                </div>
               </div>
             </div>
 
             {/* After Section */}
             <div className="flex flex-col items-center">
-              <h2 className="text-3xl font-semibold text-gray-800 mb-4">After</h2>
-              <div className="border-2 border-dashed border-gray-400 rounded-xl overflow-hidden shadow-lg w-[300px] h-[500px] flex items-center justify-center bg-gray-100">
-                <video className="w-full h-full object-contain p-3" autoPlay loop muted playsInline controls>
-                  <source src="/reel.mp4" type="video/mp4" />
-                  Your browser does not support the video tag.
-                </video>
+              <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-8 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">After</h2>
+              <div className="relative group">
+                <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
+                <div className="relative bg-white rounded-xl overflow-hidden shadow-[0_0_50px_-12px_rgba(0,0,0,0.25)] hover:shadow-[0_0_50px_-12px_rgba(0,0,0,0.35)] transition-all duration-300 w-[480px] h-[270px] flex items-center justify-center">
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10"></div>
+                  <video className="w-full h-full object-contain hover:scale-105 transition-transform duration-300" autoPlay loop muted playsInline controls>
+                    <source src="/output.mp4" type="video/mp4" />
+                    Your browser does not support the video tag.
+                  </video>
+                </div>
               </div>
             </div>
           </div>

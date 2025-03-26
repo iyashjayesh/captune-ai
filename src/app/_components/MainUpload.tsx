@@ -227,9 +227,9 @@ export default function MainUpload() {
             <Dialog>
                 <DialogTrigger asChild>
                     <div className="p-4 md:p-0 md:py-4 mb-3">
-                        <Card className="py-6 px-9 w-fit rounded-sm flex flex-row gap-1 items-center cursor-pointer hover:border hover:border-red-500">
+                        <Card className="py-6 px-9 w-fit rounded-sm flex flex-row gap-1 items-center cursor-pointer hover:border hover:border-red-500 shadow-[0_0_20px_-5px_rgba(238,51,93,0.2)] hover:shadow-[0_0_20px_-5px_rgba(238,51,93,0.4)] transition-all duration-300 hover:scale-105">
                             <Plus className="size-5 text-red-500" />
-                            <h1 className={cn("text-lg flex flex-row gap-1 items-center justify-center text-center text-red-500", font.className)}>
+                            <h1 className={cn("text-lg font-bold flex flex-row gap-1 items-center justify-center text-center text-red-500", font.className)}>
                                 Generate Captions using AI <SparklesIcon className="size-5 text-red-500 fill-current" />
                             </h1>
                         </Card>
