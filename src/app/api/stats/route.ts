@@ -1,12 +1,11 @@
-import client from "@/lib/db";
+import clientPromise from "@/lib/db";
 import { NextResponse } from "next/server";
 
 export async function GET() {
     try {
-        await client.connect();
+        const client = await clientPromise;
         const db = client.db("test");
         const stats = await db.collection("project_stats").findOne({ type: "totalVideoDuration" });
-        await client.close();
         return NextResponse.json({ value: stats?.value || 0 });
     } catch (error) {
         console.error("Error fetching stats:", error);
@@ -18,7 +17,7 @@ export async function POST(req: Request) {
     try {
         const { duration } = await req.json();
 
-        await client.connect();
+        const client = await clientPromise;
         const db = client.db("test");
         const result = await db.collection("project_stats").updateOne(
             { type: "totalVideoDuration" },
@@ -28,7 +27,6 @@ export async function POST(req: Request) {
             },
             { upsert: true }
         );
-        await client.close();
 
         console.log("Stats updated:", result);
 

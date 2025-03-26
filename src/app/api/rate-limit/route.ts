@@ -1,4 +1,4 @@
-import client from "@/lib/db";
+import clientPromise from "@/lib/db";
 import { getSession } from "@/lib/getSession";
 import { NextResponse } from "next/server";
 
@@ -15,18 +15,16 @@ export async function GET() {
             );
         }
 
-        await client.connect();
+        const client = await clientPromise;
         const db = client.db("test");
         const collection = db.collection("rate_limits");
 
-        // Get user's video processing attempts in the last 30 minutes
+        // to get  user's video processing attempts in the last 30 minutes
         const thirtyMinutesAgo = new Date(Date.now() - RATE_LIMIT_WINDOW);
         const attempts = await collection.countDocuments({
-            userId: session?.user?.id,
+            userId: session.user?.id,
             timestamp: { $gte: thirtyMinutesAgo }
         });
-
-        await client.close();
 
         return NextResponse.json({
             remaining: Math.max(0, RATE_LIMIT - attempts),
@@ -51,32 +49,29 @@ export async function POST() {
             );
         }
 
-        await client.connect();
+        const client = await clientPromise;
         const db = client.db("test");
         const collection = db.collection("rate_limits");
 
-        // Get user's video processing attempts in the last 30 minutes
+        // to get the user's video processing attempts in the last 30 minutes
         const thirtyMinutesAgo = new Date(Date.now() - RATE_LIMIT_WINDOW);
         const attempts = await collection.countDocuments({
-            userId: session?.user?.id,
+            userId: session.user?.id,
             timestamp: { $gte: thirtyMinutesAgo }
         });
 
         if (attempts >= RATE_LIMIT) {
-            await client.close();
             return NextResponse.json(
                 { message: "Rate limit exceeded. Please wait before processing more videos." },
                 { status: 429 }
             );
         }
 
-        // Record the attempt
+        // recording the attempt
         await collection.insertOne({
-            userId: session?.user?.id,
+            userId: session.user?.id,
             timestamp: new Date()
         });
-
-        await client.close();
 
         return NextResponse.json({ success: true });
     } catch (error) {

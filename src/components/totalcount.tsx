@@ -28,7 +28,7 @@ export default function VideoMinsCount() {
                 <span className="text-4xl font-bold text-indigo-600">
                     {totalSeconds.toLocaleString()}
                 </span>
-                <span className="text-lg text-gray-600">seconds of videos captioned</span>
+                <span className="text-lg text-gray-600">seconds of videos captioned ✨</span>
             </div>
         </div>
     );

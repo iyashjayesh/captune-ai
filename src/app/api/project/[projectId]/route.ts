@@ -1,4 +1,4 @@
-import client from "@/lib/db";
+import clientPromise from "@/lib/db";
 import { getSession } from "@/lib/getSession";
 import { ObjectId } from "mongodb";
 import { NextResponse } from "next/server";
@@ -14,7 +14,6 @@ export async function PATCH(req: Request) {
     }
 
     try {
-        // const { id } = params;
         const url = new URL(req.url);
         const projectId = url.pathname.split("/").pop(); // Get last segment of the path
 
@@ -31,7 +30,7 @@ export async function PATCH(req: Request) {
             );
         }
 
-        await client.connect();
+        const client = await clientPromise;
         const db = client.db("test");
         const collection = db.collection("projects");
 
@@ -47,8 +46,6 @@ export async function PATCH(req: Request) {
                 },
             }
         );
-
-        await client.close();
 
         if (result.matchedCount === 0) {
             return NextResponse.json(

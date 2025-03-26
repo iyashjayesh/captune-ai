@@ -4,7 +4,7 @@ import VideoMinsCount from "@/components/totalcount";
 import { cn } from "@/lib/utils";
 import { Poppins } from "next/font/google";
 import { ProfileTag } from "./_components/ProfileTag";
-import { SignOutTag } from "./_components/SingOutTag";
+import SignOutTag from "./_components/SingOutTag";
 const font = Poppins({
   subsets: ["latin"],
   weight: ["600"]
