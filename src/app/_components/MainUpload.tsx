@@ -24,14 +24,28 @@ export default function MainUpload() {
     const [videoDuration, setVideoDuration] = useState<number>(0);
     const [transcriptState, setTanscriptState] = useState<{ chunks: { timestamp: [number, number]; text: string }[] } | null>(null);
     const [projectId, setProjectId] = useState<string | null>(null);
+    const [rateLimit, setRateLimit] = useState<{ remaining: number; total: number } | null>(null);
 
     useEffect(() => {
         load();
+        checkRateLimit();
     }, []);
 
     const load = async () => {
         const ffmpeg_response: FFmpeg = await loadFfmpeg();
         ffmpegRef.current = ffmpeg_response;
+    };
+
+    const checkRateLimit = async () => {
+        try {
+            const response = await fetch("/api/rate-limit");
+            if (response.ok) {
+                const data = await response.json();
+                setRateLimit(data);
+            }
+        } catch (error) {
+            console.error("Error checking rate limit:", error);
+        }
     };
 
     const handleFileSelection = (file: File) => {
@@ -70,6 +84,23 @@ export default function MainUpload() {
     const convert = async (): Promise<void> => {
         if (!videoFile) {
             toast.error("No video file selected!");
+            return;
+        }
+
+        // Check rate limit before processing
+        try {
+            const response = await fetch("/api/rate-limit", {
+                method: "POST"
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                toast.error(data.message);
+                return;
+            }
+        } catch (error) {
+            console.error("Error checking rate limit:", error);
+            toast.error("Failed to check rate limit");
             return;
         }
 
@@ -151,6 +182,9 @@ export default function MainUpload() {
                     setVideoProcessed(true);
                     setProjectId(project.message);
 
+                    // Update rate limit after successful processing
+                    await checkRateLimit();
+
                     return { processingTime };
                 } finally {
                     setLoading(false);
@@ -209,17 +243,30 @@ export default function MainUpload() {
                     )}
                 >
                     <DialogTitle className={cn("text-lg md:text-2xl font-bold text-center", font.className)}>
+                        {rateLimit && (
+                            <div className="text-sm text-gray-600 mb-2">
+                                Remaining videos in this session: {rateLimit.remaining}/{rateLimit.total}
+                            </div>
+                        )}
                     </DialogTitle>
                     <div className="mt-3">
                         {videoFile && !videoProcessed && !transcriptState && (
                             <div className="flex flex-col items-center gap-3">
                                 <button
-                                    disabled={loading}
+                                    disabled={loading || (rateLimit !== null && rateLimit.remaining === 0)}
                                     onClick={convert}
-                                    className={cn("flex flex-row items-center gap-1 w-fit bg-red-500 hover:bg-red-600 text-white text-base font-semibold py-1.5 px-4 rounded-sm shadow-md cursor-pointer", font.className)}
+                                    className={cn(
+                                        "flex flex-row items-center gap-1 w-fit text-white text-base font-semibold py-1.5 px-4 rounded-sm shadow-md cursor-pointer",
+                                        loading || (rateLimit !== null && rateLimit.remaining === 0)
+                                            ? "bg-gray-400 cursor-not-allowed"
+                                            : "bg-red-500 hover:bg-red-600",
+                                        font.className
+                                    )}
                                 >
                                     {loading ? (
                                         <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
+                                    ) : rateLimit !== null && rateLimit.remaining === 0 ? (
+                                        "Rate Limit Exceeded"
                                     ) : (
                                         <>
                                             <UploadIcon className="size-5" /> Generate Captions

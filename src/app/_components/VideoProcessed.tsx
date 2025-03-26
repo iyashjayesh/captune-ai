@@ -276,6 +276,7 @@ export default function VideoProcessed({ videoFile, transcript: initialTranscrip
                     </button>
                 </div>
             )}
+            
             <div className="flex flex-col md:flex-row gap-6 md:gap-10 w-full">
                 <Card className="flex-1 basis-1/2 p-2 md:p-6 shadow-lg rounded-2xl overflow-auto">
                     <h2 className="text-xl md:text-2xl font-bold mb-4 text-red-500">Subtitles</h2>
