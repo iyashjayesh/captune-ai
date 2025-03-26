@@ -189,7 +189,6 @@ export default function MainUpload() {
                     )}
                 >
                     <DialogTitle className={cn("text-lg md:text-2xl font-bold text-center", font.className)}>
-                        {/* Upload your video */}
                     </DialogTitle>
                     <div className="mt-3">
                         {videoFile && !videoProcessed && !transcriptState && (
@@ -210,7 +209,7 @@ export default function MainUpload() {
                                 <video src={URL.createObjectURL(videoFile)} controls className="w-fit h-fit max-h-96 rounded-lg" />
                             </div>
                         )}
-                        
+
                         {!videoFile && (
                             <div className="border-2 border-dashed border-gray-600 bg-gray-100 rounded-lg p-8 flex flex-col items-center" onDrop={handleDrop} onDragOver={(e) => e.preventDefault()}>
                                 <label className="flex flex-col items-center cursor-pointer">

@@ -41,9 +41,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* <MainUpload /> */}
       <MiddleComponent />
-
 
       <div className="grid gap-20 md:gap-40 max-w-6xl mx-auto mt-20 md:mt-12 overflow-hidden">
         <div className="container flex flex-col items-center gap-6">

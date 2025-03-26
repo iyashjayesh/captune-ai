@@ -52,6 +52,14 @@ export default function VideoProcessed({ videoFile, transcript }: VideoProcessed
         return () => video.removeEventListener("timeupdate", updateSubtitles);
     }, [transcript, activeSubtitleIndex]);
 
+    const formatTime = (seconds: number): string => {
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = Math.floor(seconds % 60);
+        const ms = Math.floor((seconds % 1) * 1000);
+        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')},${ms.toString().padStart(3, '0')}`;
+    };
+
     const handleExport = async () => {
         if (!ffmpegRef.current) {
             try {
@@ -74,24 +82,72 @@ export default function VideoProcessed({ videoFile, transcript }: VideoProcessed
             // Write video file to FFmpeg
             await ffmpeg.writeFile('input.mp4', await fetchFile(videoBlob));
 
-            // Create SRT file content
+            // Create SRT file content with proper formatting
             const srtContent = transcript.chunks.map((chunk, index) => {
                 const startTime = formatTime(chunk.timestamp[0]);
                 const endTime = formatTime(chunk.timestamp[1]);
                 return `${index + 1}\n${startTime} --> ${endTime}\n${chunk.text}\n\n`;
             }).join('');
 
-            // Write SRT file
+            // Write SRT file to FFmpeg's virtual filesystem
             await ffmpeg.writeFile('subtitles.srt', srtContent);
 
-            // Burn subtitles into video
+            // // Create tmp directory and write font file
+            // await ffmpeg.exec(['-i', 'input.mp4', '-f', 'null', '-']);
+            // await ffmpeg.writeFile('tmp/arial.ttf', await fetchFile('/Arial.ttf'));
+
+            // // List files in FFmpeg's virtual filesystem to verify
+            // const files = await ffmpeg.listDir('/');
+            // console.log('Files in FFmpeg filesystem:', files);
+
+            // Burn subtitles into video with better styling
+            // await ffmpeg.exec([
+            //     '-i', 'input.mp4',
+            //     '-vf', 'subtitles=subtitles.srt:force_style=\'FontName=/tmp/arial.ttf,FontSize=24,PrimaryColour=&HFFFFFF,OutlineColour=&H000000,Outline=2,Shadow=1,MarginV=25\'',
+            //     '-c:a', 'copy',
+            //     '-preset', 'medium',
+            //     '-crf', '23',
+            //     'output.mp4',
+            //     '-report'
+            // ]);
+
             await ffmpeg.exec([
                 '-i', 'input.mp4',
-                '-vf', 'subtitles=subtitles.srt:force_style=\'FontSize=24,FontName=Arial\'',
-                '-c:a', 'copy',
-                '-report',
+                '-i', 'subtitles.srt',
+                '-c', 'copy',
+                '-c:s', 'mov_text',
                 'output.mp4'
             ]);
+
+            // // List files in FFmpeg's virtual filesystem to verify
+            // const newFiles = await ffmpeg.listDir('/');
+            // console.log('Files in FFmpeg filesystem:', newFiles);
+
+            // can we also downlpod all the file which has .log as extension?
+            // const logFiles = newFiles.filter(file => file.name.endsWith('.log'));
+            // logFiles.forEach(async (logFile) => {
+            //     const logFileData = await ffmpeg.readFile(logFile.name);
+            //     const logBlob = new Blob([logFileData], { type: 'text/plain' });
+            //     const logUrl = URL.createObjectURL(logBlob);
+            //     const logLink = document.createElement('a');
+            //     logLink.href = logUrl;
+            //     logLink.download = logFile.name;
+            //     logLink.click();
+            //     URL.revokeObjectURL(logUrl);
+            // });
+
+            const srtFile = await ffmpeg.readFile('subtitles.srt');
+            const srtBlob = new Blob([srtFile], { type: 'text/plain' });
+            const srtUrl = URL.createObjectURL(srtBlob);
+            const srtLink = document.createElement('a');
+            srtLink.href = srtUrl;
+            srtLink.download = 'subtitles.srt';
+            srtLink.click();
+            URL.revokeObjectURL(srtUrl);
+
+            // Clean up files from memory
+            await ffmpeg.deleteFile('subtitles.srt');
+            await ffmpeg.deleteFile('input.mp4');
 
             // Read the output file
             const data = await ffmpeg.readFile('output.mp4');
@@ -116,13 +172,6 @@ export default function VideoProcessed({ videoFile, transcript }: VideoProcessed
         }
     };
 
-    const formatTime = (seconds: number): string => {
-        const hours = Math.floor(seconds / 3600);
-        const minutes = Math.floor((seconds % 3600) / 60);
-        const secs = Math.floor(seconds % 60);
-        const ms = Math.floor((seconds % 1) * 1000);
-        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')},${ms.toString().padStart(3, '0')}`;
-    };
 
     return (
         <div className="flex flex-col md:flex-row gap-6 md:gap-10 w-full">
