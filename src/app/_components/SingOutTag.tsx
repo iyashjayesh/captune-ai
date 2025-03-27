@@ -10,7 +10,7 @@ export default async function SignOutTag() {
     if (session) {
         return (
             <Link
-                href="https://www.linkedin.com/in/iyashjayesh/"
+                href="/"
                 target="_blank"
                 className="fixed bg-[#ff2626e1] hover:bg-[#ff2626] top-0 right-0 bg-base-100 py-2 px-4 z-50 cursor-pointer rounded-bl-lg border-white border-b border-l border-dashed text-sm font-semibold opacity-95 hover:bg-base-200 hover:opacity-100 hover:border-solid duration-200">
                 <div className="flex flex-row justify-center items-center text-center gap-1 text-white">

@@ -2,7 +2,7 @@ import clientPromise from "@/lib/db";
 import { getSession } from "@/lib/getSession";
 import { NextResponse } from "next/server";
 
-const RATE_LIMIT = 2; // 2 videos
+const RATE_LIMIT = 3; // 2 videos
 const RATE_LIMIT_WINDOW = 30 * 60 * 1000; // 30 minutes in milliseconds
 
 export async function GET() {
