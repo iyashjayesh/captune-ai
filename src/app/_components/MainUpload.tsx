@@ -136,7 +136,9 @@ export default function MainUpload() {
                     const res = await response.json();
                     const data = res.body;
 
-                    console.log("chunks", data);
+                    if (!data || typeof data !== "object" || data === null || !("chunks" in data)) {
+                        throw new Error("Invalid response structure");
+                    }
 
                     const newChunks = fixTimestamps(data.chunks as { timestamp: [number, number]; text: string }[]);
                     data.chunks = newChunks;
