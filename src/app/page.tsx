@@ -3,6 +3,7 @@ import MiddleComponent from "@/components/middle";
 import VideoMinsCount from "@/components/totalcount";
 import { cn } from "@/lib/utils";
 import { Poppins } from "next/font/google";
+import { GithubTag } from "./_components/GithubTag";
 import { ProfileTag } from "./_components/ProfileTag";
 import SignOutTag from "./_components/SingOutTag";
 const font = Poppins({
@@ -15,6 +16,7 @@ export default function Home() {
     <main className="flex flex-col text-center overflow-hidden">
       <div className="fixed inset-0 z-[-10] h-screen w-screen bg-white" style={{ background: 'radial-gradient(125% 125% at 50% 10%, #fff 40%, #ee335d 100%)' }}>
       </div>
+      <GithubTag />
       <SignOutTag />
       <div className="overflow-y-auto flex-1 flex flex-col justify-center items-center text-center">
 
@@ -48,7 +50,7 @@ export default function Home() {
 
       <MiddleComponent />
 
-      <div className="grid gap-20 md:gap-40 max-w-7xl mx-auto md:mt-9 overflow-hidden">
+      <div className="grid gap-20 md:gap-40 max-w-7xl mx-auto md:mt-12 overflow-hidden">
         <div className="container flex flex-col items-center gap-12">
           <div className="flex flex-col md:flex-row items-center justify-center gap-12 md:gap-24">
             {/* Before Section */}

@@ -10,11 +10,11 @@ import { toast } from "sonner";
 type VideoProcessedProps = {
     videoFile: File;
     transcript: { chunks: { timestamp: [number, number]; text: string }[] };
-    onNewVideo?: () => void;
+    // onNewVideo?: () => void;
     projectId: string;
 };
 
-export default function VideoProcessed({ videoFile, transcript: initialTranscript, onNewVideo, projectId }: VideoProcessedProps) {
+export default function VideoProcessed({ videoFile, transcript: initialTranscript, projectId }: VideoProcessedProps) {
     const [activeSubtitleIndex, setActiveSubtitleIndex] = useState<number | null>(null);
     const [exporting, setExporting] = useState(false);
     const [exported, setExported] = useState(false);
@@ -266,7 +266,15 @@ export default function VideoProcessed({ videoFile, transcript: initialTranscrip
             {exported && (
                 <div className="flex justify-center w-full">
                     <button
-                        onClick={onNewVideo}
+                        onClick={
+                            () => {
+                                setExported(false);
+                                setExporting(false);
+                                setActiveSubtitleIndex(null);
+                                setTranscript(initialTranscript);
+                                window.location.reload();
+                            }
+                        }
                         className="text-white text-lg rounded-lg font-semibold px-6 py-3 bg-green-500 hover:bg-green-600 transition-all flex items-center gap-2"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -276,7 +284,7 @@ export default function VideoProcessed({ videoFile, transcript: initialTranscrip
                     </button>
                 </div>
             )}
-            
+
             <div className="flex flex-col md:flex-row gap-6 md:gap-10 w-full">
                 <Card className="flex-1 basis-1/2 p-2 md:p-6 shadow-lg rounded-2xl overflow-auto">
                     <h2 className="text-xl md:text-2xl font-bold mb-4 text-red-500">Subtitles</h2>

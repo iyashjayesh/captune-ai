@@ -19,7 +19,7 @@ export default async function MiddleComponent() {
             >
                 <Button
                     type="submit"
-                    className="cursor-pointer bg-[#ee335d] text-2xl font-bold text-white mt-12 mb-0"
+                    className="cursor-pointer bg-[#007bff] text-2xl font-bold text-white mt-12 mb-0"
                 >
                     Sign in with Google
                 </Button>
