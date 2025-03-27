@@ -238,13 +238,13 @@ export default function MainUpload() {
 
                 <DialogContent
                     className={cn(
-                        "w-full max-w-5xl min-w-[800px] p-6 rounded-2xl shadow-xl bg-white max-h-[90vh] overflow-auto",
+                        "w-[95vw] md:w-full max-w-5xl md:min-w-[800px] p-4 md:p-6 rounded-2xl shadow-xl bg-white max-h-[90vh] overflow-auto",
                         font.className
                     )}
                 >
-                    <DialogTitle className={cn("text-lg md:text-2xl font-bold text-center", font.className)}>
+                    <DialogTitle className={cn("text-base md:text-2xl font-bold text-center", font.className)}>
                         {rateLimit && (
-                            <div className="text-sm text-gray-600 mb-2">
+                            <div className="text-xs md:text-sm text-gray-600 mb-2">
                                 Remaining videos in this session: {rateLimit.remaining}/{rateLimit.total}
                             </div>
                         )}
@@ -256,7 +256,7 @@ export default function MainUpload() {
                                     disabled={loading || (rateLimit !== null && rateLimit.remaining === 0)}
                                     onClick={convert}
                                     className={cn(
-                                        "flex flex-row items-center gap-1 w-fit text-white text-base font-semibold py-1.5 px-4 rounded-sm shadow-md cursor-pointer",
+                                        "flex flex-row items-center gap-1 w-fit text-white text-sm md:text-base font-semibold py-1.5 px-4 rounded-sm shadow-md cursor-pointer",
                                         loading || (rateLimit !== null && rateLimit.remaining === 0)
                                             ? "bg-gray-400 cursor-not-allowed"
                                             : "bg-red-500 hover:bg-red-600",
@@ -269,22 +269,22 @@ export default function MainUpload() {
                                         "Rate Limit Exceeded"
                                     ) : (
                                         <>
-                                            <UploadIcon className="size-5" /> Generate Captions
+                                            <UploadIcon className="size-4 md:size-5" /> Generate Captions
                                         </>
                                     )}
                                 </button>
-                                <video src={URL.createObjectURL(videoFile)} controls className="w-fit h-fit max-h-96 rounded-lg" />
+                                <video src={URL.createObjectURL(videoFile)} controls className="w-full md:w-fit h-fit max-h-[50vh] md:max-h-96 rounded-lg" />
                             </div>
                         )}
 
                         {!videoFile && (
-                            <div className="border-2 border-dashed border-gray-600 bg-gray-100 rounded-lg p-8 flex flex-col items-center" onDrop={handleDrop} onDragOver={(e) => e.preventDefault()}>
+                            <div className="border-2 border-dashed border-gray-600 bg-gray-100 rounded-lg p-4 md:p-8 flex flex-col items-center" onDrop={handleDrop} onDragOver={(e) => e.preventDefault()}>
                                 <label className="flex flex-col items-center cursor-pointer">
-                                    <Upload className="size-9 text-red-400 mb-2" />
-                                    <span className={cn("text-lg text-gray-800", normalfont.className)}>
+                                    <Upload className="size-7 md:size-9 text-red-400 mb-2" />
+                                    <span className={cn("text-base md:text-lg text-gray-800", normalfont.className)}>
                                         Drop your video here
                                     </span>
-                                    <span className={cn("flex flex-row justify-between gap-3 mt-1 text-sm text-gray-400", normalfont.className)}>
+                                    <span className={cn("flex flex-col md:flex-row justify-between gap-2 md:gap-3 mt-1 text-xs md:text-sm text-gray-400", normalfont.className)}>
                                         <p>Max length: 5.00 mins</p>
                                         <p>Max size: 50MB</p>
                                     </span>

@@ -50,15 +50,15 @@ export default function Home() {
 
       <MiddleComponent />
 
-      <div className="grid gap-20 md:gap-40 max-w-7xl mx-auto md:mt-12 overflow-hidden">
-        <div className="container flex flex-col items-center gap-12">
-          <div className="flex flex-col md:flex-row items-center justify-center gap-12 md:gap-24">
+      <div className="grid gap-8 md:gap-20 max-w-7xl mx-auto mt-3 overflow-hidden px-4 md:px-0">
+        <div className="container flex flex-col items-center gap-6 md:gap-12">
+          <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-12">
             {/* Before Section */}
-            <div className="flex flex-col items-center">
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-8 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Before</h2>
-              <div className="relative group">
+            <div className="flex flex-col items-center w-full md:w-auto">
+              <h2 className="text-xl md:text-3xl font-bold text-gray-800 mb-4 md:mb-8 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Before</h2>
+              <div className="relative group w-full">
                 <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
-                <div className="relative bg-white rounded-xl overflow-hidden shadow-[0_0_50px_-12px_rgba(0,0,0,0.25)] hover:shadow-[0_0_50px_-12px_rgba(0,0,0,0.35)] transition-all duration-300 w-[480px] h-[270px] flex items-center justify-center">
+                <div className="relative bg-white rounded-xl overflow-hidden shadow-[0_0_50px_-12px_rgba(0,0,0,0.25)] hover:shadow-[0_0_50px_-12px_rgba(0,0,0,0.35)] transition-all duration-300 w-full aspect-video flex items-center justify-center">
                   <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10"></div>
                   <video className="w-full h-full object-contain hover:scale-105 transition-transform duration-300" autoPlay loop muted playsInline controls>
                     <source src="/hindi_reel.mp4" type="video/mp4" />
@@ -69,11 +69,11 @@ export default function Home() {
             </div>
 
             {/* After Section */}
-            <div className="flex flex-col items-center">
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-8 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">After</h2>
-              <div className="relative group">
+            <div className="flex flex-col items-center w-full md:w-auto">
+              <h2 className="text-xl md:text-3xl font-bold text-gray-800 mb-4 md:mb-8 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">After</h2>
+              <div className="relative group w-full">
                 <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
-                <div className="relative bg-white rounded-xl overflow-hidden shadow-[0_0_50px_-12px_rgba(0,0,0,0.25)] hover:shadow-[0_0_50px_-12px_rgba(0,0,0,0.35)] transition-all duration-300 w-[480px] h-[270px] flex items-center justify-center">
+                <div className="relative bg-white rounded-xl overflow-hidden shadow-[0_0_50px_-12px_rgba(0,0,0,0.25)] hover:shadow-[0_0_50px_-12px_rgba(0,0,0,0.35)] transition-all duration-300 w-full aspect-video flex items-center justify-center">
                   <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10"></div>
                   <video className="w-full h-full object-contain hover:scale-105 transition-transform duration-300" autoPlay loop muted playsInline controls>
                     <source src="/output.mp4" type="video/mp4" />

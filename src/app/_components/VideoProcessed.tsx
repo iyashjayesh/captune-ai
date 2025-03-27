@@ -262,7 +262,7 @@ export default function VideoProcessed({ videoFile, transcript: initialTranscrip
     };
 
     return (
-        <div className="flex flex-col gap-6 w-full">
+        <div className="flex flex-col gap-4 md:gap-6 w-full">
             {exported && (
                 <div className="flex justify-center w-full">
                     <button
@@ -275,9 +275,9 @@ export default function VideoProcessed({ videoFile, transcript: initialTranscrip
                                 window.location.reload();
                             }
                         }
-                        className="text-white text-lg rounded-lg font-semibold px-6 py-3 bg-green-500 hover:bg-green-600 transition-all flex items-center gap-2"
+                        className="text-white text-base md:text-lg rounded-lg font-semibold px-4 md:px-6 py-2 md:py-3 bg-green-500 hover:bg-green-600 transition-all flex items-center gap-2"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 md:h-5 md:w-5" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
                         </svg>
                         Upload New Video
@@ -285,25 +285,25 @@ export default function VideoProcessed({ videoFile, transcript: initialTranscrip
                 </div>
             )}
 
-            <div className="flex flex-col md:flex-row gap-6 md:gap-10 w-full">
+            <div className="flex flex-col md:flex-row gap-4 md:gap-10 w-full">
                 <Card className="flex-1 basis-1/2 p-2 md:p-6 shadow-lg rounded-2xl overflow-auto">
-                    <h2 className="text-xl md:text-2xl font-bold mb-4 text-red-500">Subtitles</h2>
-                    <div ref={subtitleListRef} className="flex flex-col overflow-y-auto h-[calc(90vh-200px)]">
+                    <h2 className="text-lg md:text-2xl font-bold mb-3 md:mb-4 text-red-500">Subtitles</h2>
+                    <div ref={subtitleListRef} className="flex flex-col overflow-y-auto h-[calc(50vh-100px)] md:h-[calc(90vh-200px)]">
                         {transcript?.chunks.map((chunk, index) => (
                             <div
                                 key={index}
                                 id={`subtitle-${index}`}
-                                className={`m-2 flex flex-col gap-2 p-2 rounded-lg ${activeSubtitleIndex === index ? "bg-red-300 text-white" : ""
+                                className={`m-1 md:m-2 flex flex-col gap-1 md:gap-2 p-2 rounded-lg ${activeSubtitleIndex === index ? "bg-red-300 text-white" : ""
                                     }`}
                             >
-                                <div className="flex flex-row justify-between items-center gap-2">
-                                    <div className="flex items-center gap-2">
+                                <div className="flex flex-row justify-between items-center gap-1 md:gap-2">
+                                    <div className="flex items-center gap-1 md:gap-2">
                                         <Input
                                             type="number"
                                             step="0.1"
                                             value={chunk.timestamp[0]}
                                             onChange={(e) => handleTimestampChange(index, true, e.target.value)}
-                                            className="w-20 bg-red-400 text-white border-none"
+                                            className="w-16 md:w-20 bg-red-400 text-white border-none text-sm md:text-base"
                                         />
                                         <span className="text-white">-</span>
                                         <Input
@@ -311,36 +311,35 @@ export default function VideoProcessed({ videoFile, transcript: initialTranscrip
                                             step="0.1"
                                             value={chunk.timestamp[1]}
                                             onChange={(e) => handleTimestampChange(index, false, e.target.value)}
-                                            className="w-20 bg-red-400 text-white border-none"
+                                            className="w-16 md:w-20 bg-red-400 text-white border-none text-sm md:text-base"
                                         />
                                     </div>
-                                    <p className="text-sm md:text-base font-bold bg-red-400 w-fit px-2 rounded-lg text-white">
+                                    <p className="text-xs md:text-base font-bold bg-red-400 w-fit px-2 rounded-lg text-white">
                                         {index + 1}
                                     </p>
                                 </div>
-                                <p className="text-sm md:text-base">{chunk.text}</p>
+                                <p className="text-xs md:text-base">{chunk.text}</p>
                             </div>
                         ))}
                     </div>
                 </Card>
                 <Card className="flex-1 basis-1/2 p-2 md:p-6 shadow-lg rounded-2xl flex flex-col items-center overflow-hidden">
-                    <div className="flex flex-col gap-4 w-full mb-2">
-                        <h2 className="text-xl md:text-2xl font-bold text-red-500">Video Preview</h2>
-                        <div className="flex flex-row gap-4 justify-end">
+                    <div className="flex flex-col gap-3 md:gap-4 w-full mb-2">
+                        <h2 className="text-lg md:text-2xl font-bold text-red-500">Video Preview</h2>
+                        <div className="flex flex-col sm:flex-row gap-2 md:gap-4 justify-end">
                             <button
                                 onClick={handleExportSRT}
                                 disabled={exporting}
-                                className="text-white text-lg rounded-lg font-semibold px-4 py-2 bg-blue-500 hover:bg-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                className="text-white text-sm md:text-lg rounded-lg font-semibold px-3 md:px-4 py-2 bg-blue-500 hover:bg-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 md:h-5 md:w-5" viewBox="0 0 20 20" fill="currentColor">
                                     <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
                                 </svg>
                                 Export SRT
                             </button>
                             <button
                                 onClick={handleExportVideo}
-                                // disabled={exporting || exported}
-                                className={`text-white text-lg rounded-lg font-semibold px-4 py-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${exported
+                                className={`text-white text-sm md:text-lg rounded-lg font-semibold px-3 md:px-4 py-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${exported
                                     ? 'bg-green-500 hover:bg-green-600'
                                     : 'bg-red-500 hover:bg-red-600'
                                     }`}
@@ -352,14 +351,14 @@ export default function VideoProcessed({ videoFile, transcript: initialTranscrip
                                     </>
                                 ) : exported ? (
                                     <>
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 md:h-5 md:w-5" viewBox="0 0 20 20" fill="currentColor">
                                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                         </svg>
                                         Exported Successfully
                                     </>
                                 ) : (
                                     <>
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 md:h-5 md:w-5" viewBox="0 0 20 20" fill="currentColor">
                                             <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
                                             <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
                                         </svg>
@@ -374,7 +373,7 @@ export default function VideoProcessed({ videoFile, transcript: initialTranscrip
                             src={videoUrl}
                             ref={videoRef}
                             controls
-                            className="w-fit py-20 rounded-xl h-[40vh] md:h-[60vh] object-contain"
+                            className="w-full md:w-fit py-4 md:py-20 rounded-xl h-[30vh] md:h-[60vh] object-contain"
                         />
                     </div>
                 </Card>
