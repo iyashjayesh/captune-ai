@@ -1,6 +1,17 @@
 # Captune AI - Free Subtitle Generator
 
+⭐ Drop a star if you like the project!
+
 A powerful web application that generates subtitles for videos using AI. Visit the live demo at [free-subtitle-ai.yashchauhan.dev](https://free-subtitle-ai.yashchauhan.dev)
+
+## Demo Video
+Watch our demo video on YouTube:
+
+<div align="center">
+  <a href="https://youtu.be/ltycu8GZ7pw">
+    <img src="https://img.youtube.com/vi/ltycu8GZ7pw/0.jpg" alt="Captune AI Demo" width="600">
+  </a>
+</div>
 
 Captune AI leverages open ai whisper model to accurately transcribe spoken words into text, making it easier for users to create subtitles for their videos. Whether you're a content creator, educator, or business professional, this tool simplifies the process of adding subtitles, enhancing accessibility and engagement for your audience. With support for multiple languages and customizable subtitle options, Captune AI is designed to meet diverse user needs.
 
@@ -141,5 +152,5 @@ Made with ❤️ by [Yash Chauhan](https://yashchauhan.dev) ([@iyashjayesh](http
 
 Below are the architecture diagrams for the Captune AI application:
 
-![User Interface and Processing Layer](path/to/first/image.png)
-![API and Data Layer](path/to/second/image.png)
+![High Level Architecture](./High-Level%20System%20Architecture.png)
+![Low Level Architecture](./Low-Level%20Component%20Architecture.png)
